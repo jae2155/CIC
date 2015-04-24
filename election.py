@@ -1,51 +1,82 @@
+#######################
+# Jane Doe
+# jd1234
+# Computing in Context Spring '15, Assignment 5
+# These are just some handy dandy helper functions
+#######################
+
 import random
 
-#A function to simulate 1 election
-def election( votes, probs, dem = 0):
-    for k in range(len(votes)):
-        #Flip a coin for each state
-        if random.random() < probs[k]:
-            #Add the votes if the democrats win the state
-            dem += votes[k]
-    #determining the outcome of the election
-    if dem > 269:
-        return 1
-    if dem < 269:
-        return 0
-    else:
-        return 2
+def election(electoral_votes, probs, dem_votes = 0):
+    """
+    Simulates a single election.
 
-#A function to estimate the total
-#number of possible ways to tie
-def est_ties(votes,n,probs):
+    Parameters:
+        electoral_votes - a list of electoral votes for the election year
+        probs - a list of probabilities that the democrats will win each state
+        dem_votes - the number of electoral votes the democrats already have
+
+    Returns:
+        The number of electoral votes the democrats win in this election
+    """
+    for num_votes, prob in zip(electoral_votes, probs):
+        if random.random() < prob: # Flip a coin for each state
+            dem_votes += num_votes
+    
+    return dem_votes
+
+def est_ties(votes, n, probs):
+    """
+    Estimates the total number of ways to tie in a given election year
+
+    Parameters:
+        votes - a list of electoral votes for the election year
+        n - the number of simulations to run 
+        probs - a list of probabilities that the democrats will win each state
+
+    Returns: 
+        The estimated number of ways there are to tie the election
+    """
     num_ties = 0
-    #simulate n elections
-    for k in range(n):
-        if election(votes,probs) == 2:
-            #if a tie occurs increment num_ties
-            num_ties += 1
-    #return (%ties)*2^51
-    return num_ties/n*2**51
 
-#A function to estimate the probabilities
-#of the three possible outcomes of the eletion
-def est_percentages(votes,n,probs,gore):
+    for k in range(n): # n elections
+        if election(votes,probs) == 269: # tie
+            num_ties += 1
+    
+    total_posibilities = 2**51
+    return (num_ties/n)*total_posibilities
+
+def est_probs(votes, n, probs, dem_votes):
+    """
+    Estimates the probabilities of each party winning the election
+
+    Parameters:
+        votes - a list of electoral votes for the election year
+        n - the number of simulations to run 
+        probs - a list of probabilities that the democrats will win each state
+        dem_votes - the number of electoral votes the democrats already have
+
+    Returns:
+        dem_prob - the probability that the democrats will win the election
+        tie_prob - the probability that the election will result in a tie
+        rep_prob - the probability that the republicans will win the election
+    """
     dem_wins = 0
-    ties = 0
-    #simulate n election
-    for k in range(n):
-        result = election(votes,probs,gore)
-        #We only need to keep track of ties and democratic wins
-        if result == 1:
+    rep_wins = 0
+    
+    for k in range(n): # n elections
+        new_dem_votes = election(votes, probs, dem_votes=dem_votes)
+        if new_dem_votes > 269:
             dem_wins += 1
-        if result == 2:
-            ties += 1
+        elif new_dem_votes < 269:
+            rep_wins += 1
+
     dem_prob = dem_wins/n
-    ties_prob = ties/n
-    #Prob(rep win) = 1-Prob(dem win) - Prob(tie)
-    #I.E. the sum of all probs is 1
-    rep_prob = 1-dem_prob-ties_prob
-    return dem_prob,ties_prob,rep_prob
+    rep_prob = rep_wins/n
+    tie_prob = 1 - (dem_prob + rep_prob)
+
+    return (dem_prob, tie_prob, rep_prob)
+
 
 
 
